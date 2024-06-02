@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to Stock Prices</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .bg {
+            height: 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            filter: blur(8px);
+            -webkit-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%); /* Example gradient */
+        }
+        
+        
+        .content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1;
+            color: white;
+            font-size: 24px;
+        }
+
+        .btn-custom {
+            font-size: 24px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+    <script>
+        function validateForm() {
+            const end = document.getElementById('end');
+            const interval = document.getElementById('interval');
+
+            if (end.value && interval.value) {
+                alert("Please enter either an end date or an interval, not both.");
+                return false;
+            }
+
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const end = document.getElementById('end');
+            const interval = document.getElementById('interval');
+            end.value = ''; // Set default value for end date
+            interval.value = 1; // Default value for interval
+
+            end.addEventListener('input', () => {
+                if (end.value) {
+                    interval.value = '';
+                    interval.disabled = true;
+                } else {
+                    interval.disabled = false;
+                }
+            });
+
+            interval.addEventListener('input', () => {
+                if (interval.value) {
+                    end.value = '';
+                    end.disabled = true;
+                } else {
+                    end.disabled = false;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="bg"></div>
+    <div class="content">
+        <div>
+            <h1>Welcome to the Stock Prices</h1>
+            <form method="GET" action="{% url 'display_floor' %}" onsubmit="return validateForm();">
+                <div class="form-group">
+                    <label for="comp">Company Symbol</label>
+                    <input type="text" class="form-control" id="comp" name="comp" placeholder="Enter company symbol" required>
+                </div>
+                <div class="form-group">
+                    <label for="start">Start Date</label>
+                    <input type="date" class="form-control" id="start" name="start" required>
+                </div>
+                <div class="form-group">
+                    <label for="end">End Date</label>
+                    <input type="date" class="form-control" id="end" name="end">
+                </div>
+                <div class="form-group">
+                    <label for="interval">Interval</label>
+                    <input type="number" class="form-control" id="interval" name="interval" min="1">
+                </div>
+                <button type="submit" class="btn btn-custom">Submit</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

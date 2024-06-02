@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Prices</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        :root {
+            font-size: 16px; /* Base font size */
+        }
+        body {
+            padding: 1.25rem;
+            background-color: #c89666;
+            font-size: 1rem; /* Base font size */
+            color: white; /* Darker font color for better contrast */
+        }
+        .table-container {
+            margin-top: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2.8rem; /* Gap between cards */
+        }
+        .card {
+            flex: 1 1 calc(33.333% - 2.5rem); /* Three cards per row with margin */
+            padding: 0.9375rem; /* Padding inside cards */
+            background-color: #fff;
+            border-radius: 0.3125rem; /* Rounded corners */
+            box-shadow: 0 0 0.625rem rgba(0,0,0,0.1); /* Subtle shadow for depth */
+            transition: transform 0.3s; /* Smooth hover effect */
+            color: white;
+        }
+        .card:hover {
+            transform: scale(1.05); /* Slight zoom on hover */
+        }
+        .card h5 {
+            margin-bottom: 0.9375rem;
+            font-size: 1.5625rem; /* Larger title font size */
+        }
+        .card p {
+            margin: 0.3125rem 0; /* Margin between paragraphs */
+        }
+        #loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: #c89666;
+            z-index: 9999;
+        }
+        .spinner-border {
+            width: 3rem; /* Width in rem */
+            height: 3rem; /* Height in rem */
+        }
+        #timer {
+            margin-top: 1.25rem;
+            font-size: 2.5rem; /* Timer font size */
+            color: #ffffff; /* Bright white color */
+        }
+        .spinner-border .sr-only {
+            color: #ffffff; /* Bright white color */
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+        .nav-buttons a {
+            font-size: 1.25rem; /* Button font size */
+            padding: 0.625rem 1.25rem; /* Button padding */
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 0.3125rem; /* Border radius */
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .nav-buttons a:hover {
+            background-color: #B0C4DE;
+            color: white;
+        }
+  
+        @media (width: 980px) {
+            body {
+                font-size: 40px; /* Base font size */
+            }            
+            .card {
+                flex: 1 1 100%; /* One card per row for mobile devices */
+            }
+        }
+        @media (width: 460px) {
+            body {
+                font-size: 32px; /* Base font size */
+            }  
+            .card {
+                flex: 1 1 100%; /* One card per row for mobile devices */
+            }
+            .nav-buttons a {
+                flex: 1 1 45%; /* Buttons take full width */
+                text-align: center;
+            }
+            .nav-buttons {
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 0.625rem; /* Gap between buttons */
+            }
+        }        
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <div id="timer">0 seconds</div>
+    </div>
+    <div class="container" id="content" style="display: none;">
+        <div class="nav-buttons">
+            <a href="javascript:history.back()">Go Back</a>
+            <a href="{% url 'homepage' %}">Go to Homepage</a>
+        </div>
+        <h1 class="text-center">Today's Stock Prices</h1>
+        <div class="table-container" id="table-container"></div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var content = document.getElementById("content");
+            var loading = document.getElementById("loading");
+            var tableContainer = document.getElementById("table-container");
+            var timer = document.getElementById("timer");
+            var seconds = 0;
+        
+            function updateTimer() {
+                seconds++;
+                timer.textContent = seconds + " seconds";
+            }
+        
+            var timerInterval = setInterval(updateTimer, 1000);
+        
+            var comp = "{{ comp }}";
+            var start = "{{ start }}";
+            var end = "{{ end }}";
+            var interval = "{{ interval }}";
+        
+            fetch(`/get_floor_data/?comp=${comp}&start=${start}&end=${end}&interval=${interval}`)
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(timerInterval);
+        
+                    data.data.forEach(row => {
+                        var card = document.createElement('div');
+                        card.classList.add('card');
+        
+                        var title = document.createElement('h5');
+                        card.appendChild(title);
+        
+                        if (row.Broker === 'Total') {
+                            card.style.backgroundColor = '#FFD700';
+                            card.style.color = '#000';
+                            title.textContent = "Total Summary";
+        
+                            var totalQuantity = document.createElement('p');
+                            totalQuantity.textContent = "Total Traded Quantity: " + row.bqty;
+                            card.appendChild(totalQuantity);
+                        } else {
+                            title.textContent = "Broker " + row.Broker;
+        
+                            var mappings = {
+                                holding: 'Net Holding',
+                                wacchold: 'Wacc Hold',
+                                bqty: 'Buy Qty',
+                                brate: 'Buy Rate',
+                                sqty: 'Sell Qty',
+                                srate: 'Sell Rate',
+                                buyPercentage: 'Buy Percentage',
+                                sellPercentage: 'Sell Percentage'
+                            };
+        
+                            for (var key in mappings) {
+                                if (row.hasOwnProperty(key)) {
+                                    var p = document.createElement('p');
+                                    p.textContent = mappings[key] + ": " + row[key];
+                                    card.appendChild(p);
+        
+                                    if (key === 'holding') {
+                                        var holdingValue = row[key] !== null ? parseFloat(row[key]) : null;
+                                        if (holdingValue > 0) {
+                                            card.style.backgroundColor = '#116466';
+                                        } else if (holdingValue < 0) {
+                                            card.style.backgroundColor = '#9A1750';
+                                        } else if (holdingValue === null) {
+                                            card.style.backgroundColor = '#808080'; // Grey color for None values
+                                        }
+                                    }
+                                }
+                            }
+                        }
+        
+                        tableContainer.appendChild(card);
+                    });
+        
+                    content.style.display = "block";
+                    loading.style.display = "none";
+                });
+        });
+    </script>
+</body>
+</html>

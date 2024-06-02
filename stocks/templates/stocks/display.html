@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Prices</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #DCDCDC;
+        }
+        .table {
+            margin-top: 20px;
+            width: 100%;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+        #loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: #DCDCDC;
+            z-index: 9999;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        #timer {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #007bff;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .nav-buttons a {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .nav-buttons a:hover {
+            background-color: #B0C4DE;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <div id="timer">0 seconds</div>
+    </div>
+    <div class="container" id="content" style="display: none;">
+        <div class="nav-buttons">
+            <a href="javascript:history.back()">Go Back</a>
+            <a href="{% url 'homepage' %}">Go to Homepage</a>
+        </div>
+        <h1 class="text-center">Today's Stock Prices</h1>
+        <div class="table-responsive" id="table-container"></div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var content = document.getElementById("content");
+            var loading = document.getElementById("loading");
+            var tableContainer = document.getElementById("table-container");
+            var timer = document.getElementById("timer");
+            var seconds = 0;
+
+            function updateTimer() {
+                seconds++;
+                timer.textContent = seconds + " seconds";
+            }
+
+            var timerInterval = setInterval(updateTimer, 1000);
+
+            fetch('/get_stock_data/')
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(timerInterval);
+
+                    var table = document.createElement('table');
+                    table.classList.add('table', 'table-striped', 'table-bordered');
+
+                    var thead = table.createTHead();
+                    var tbody = table.createTBody();
+
+                    var headRow = thead.insertRow();
+                    for (var key in data.data[0]) {
+                        var th = document.createElement('th');
+                        th.textContent = key;
+                        headRow.appendChild(th);
+                    }
+
+                    data.data.forEach(row => {
+                        var bodyRow = tbody.insertRow();
+                        for (var key in row) {
+                            var cell = bodyRow.insertCell();
+                            cell.textContent = row[key];
+                        }
+                    });
+
+                    tableContainer.appendChild(table);
+                    content.style.display = "block";
+                    loading.style.display = "none";
+                });
+        });
+    </script>
+</body>
+</html>
+
+
+
