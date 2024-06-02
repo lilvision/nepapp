@@ -1,0 +1,12 @@
+[build]
+  publish = "public"
+  command = "make build"
+
+[build.environment]
+  DJANGO_SETTINGS_MODULE = "omninepse.settings"
+  PYTHON_VERSION = "3.12"
+
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200
